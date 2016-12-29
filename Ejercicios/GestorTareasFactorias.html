@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Gestor de tareas</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+		<script src="../angular.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+		<script>
+			$( document ).ready(function() {
+				$('[data-toggle="tooltip"]').tooltip(); 
+			});
+		</script>
+	</head>
+	<body ng-app="appTareas" ng-controller="contTareas">
+		<div class="container">
+
+			<h1>Gestor de Tareas</h1>
+
+			<form>
+				<div class="form-group row"> 
+					<label class="col-sm-2 form-control-label">Tarea:</label>
+					<div class="col-sm-10">
+						<input class="form-control" type="text" ng-model="nombreTarea">
+					</div> 
+				</div>
+				<div class="form-group row"> 
+					<label class="col-sm-2 form-control-label">Estado:</label>
+					<div class="col-sm-10">
+						<div class="radio">
+							<label>
+								<input type="radio" ng-model="estadoTarea" value="todo">
+								To Do
+							</label>
+						</div>
+						<div class="radio">
+							<label>
+								<input type="radio" ng-model="estadoTarea" value="progress">
+								Progress
+							</label>
+						</div>
+						<div class="radio">
+							<label>
+								<input type="radio" ng-model="estadoTarea" value="done">
+								Done
+							</label>
+						</div>
+					</div>
+				</div>
+				<div class="form-group row"> 
+					<label class="col-sm-2 form-control-label">Detalles:</label>
+					<div class="col-sm-10">
+						<textarea class="form-control" ng-model="detalleTarea"></textarea> 
+					</div> 
+				</div> 
+				<input type="hidden" ng-model="idTarea">
+
+				<div class="form-group row">  
+					<div class="col-sm-offset-2 col-sm-10">
+						<!-- Muestra un bloque de botones o el otro pero nunca ambos -->
+						<div ng-show="nuevo">
+							<button class="btn btn-success" ng-click="guardar()">Nueva tarea</button>
+							<button type="reset" class="btn btn-warning">Resetear</button>
+						</div>
+						<div ng-show="!nuevo">
+							<button class="btn btn-success" ng-click="guardar()">Guardar cambios</button>
+							<button class="btn btn-warning" ng-click="cancelar()">Descartar cambios</button>
+						</div>
+					</div>
+				</div>
+			</form><br/><br/>
+
+			<h2>Listado de tareas</h2>
+			<table class="table">
+				<thead><tr>
+					<!-- <th>#</th> -->
+					<th>Tarea</th>
+					<th class="text-center">Detalles</th>
+					<th class="text-center">To Do</th>
+					<th class="text-center">Progress</th>
+					<th class="text-center">Done</th>
+					<th></th>
+				</tr></thead>
+				<tbody>
+					<tr ng-repeat="tarea in tareas">
+						<!-- <td>{{tarea.id}}</td> --><!-- FIXME: Arreglar índice -->
+						<td>{{tarea.nombre}}</td>
+						<td class="text-center">{{tarea.detalle}}</td>
+						<td class="text-center">{{tarea.todo}}</td>
+						<td class="text-center">{{tarea.progress}}</td>
+						<td class="text-center">{{tarea.done}}</td>
+						<td class="text-right">
+							<button type="button" class="btn btn-sm btn-info" ng-click="editar(tarea)" data-toggle="tooltip" data-placement="top" title="Editar tarea">
+								<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+							</button>
+							<button type="button" class="btn btn-sm btn-danger" ng-click="borrar(tarea)" data-toggle="tooltip" data-placement="top" title="Borrar tarea">
+								<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+							</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+<script>
+					
+var app = angular.module("appTareas",[]);
+app.controller("contTareas",function($scope, taskFactory){
+	
+	$scope.tareas = [];
+	var posicion=0;
+	$scope.indice=0;
+	$scope.nuevo=true; // Determina el bloque de botones del formulario a mostrar/ocultar 
+	
+	init();
+	
+	function init() {
+		$scope.tareas = [];
+		$scope.tareas = taskFactory.getTask();
+		$scope.indice = taskFactory.getIndex();
+	}
+	
+	// Crea o actualiza una tarea
+	$scope.guardar=function(){
+		var tarea = {
+			id:$scope.indice,
+			nombre:$scope.nombreTarea,
+			todo: ($scope.estadoTarea == "todo"?"X":" "),
+			progress: ($scope.estadoTarea == "progress"?"X":" "),
+			done: ($scope.estadoTarea == "done"?"X":" "),
+			detalle:$scope.detalleTarea
+		}
+		if ($scope.nuevo){
+			$scope.tareas.push(tarea);
+			window.localStorage.setItem("Tarea:"+tarea.id, JSON.stringify(tarea));
+			$scope.indice = $scope.indice+1;
+			window.localStorage.setItem("indice", $scope.indice);
+		}
+		else {
+			$scope.tareas[posicion]=tarea;
+			window.localStorage.setItem("Tarea:"+tarea.id, JSON.stringify(tarea));
+		}
+		resetear();
+	}
+	
+	// Resetea el formulario y muestra el botón "Nueva tarea"
+	$scope.cancelar=function(){
+		resetear();
+	}
+
+	// Actualiza los campos del formulario con los datos de la tarea seleccionada
+	$scope.editar=function(aux){
+		$scope.nombreTarea=aux.nombre;
+		$scope.estadoTarea=(aux.todo=="X"?"todo":(aux.progress=="X"?"progress":"done"));
+		$scope.detalleTarea=aux.detalle;	
+		$scope.idTarea=aux.id;
+		$scope.nuevo = false; // Muestra el botón "Guardar cambios"
+		
+		posicion = $scope.tareas.indexOf(aux);
+	}
+	
+	// Borra la tarea seleccionada
+	$scope.borrar = function(aux) {
+		$scope.idTarea=aux.id;
+		window.localStorage.removeItem("Tarea:"+$scope.idTarea);
+		init();
+		resetear();
+	}
+	
+	// Resetea todos los campos del formulario
+	function resetear(){ 
+		$scope.nombreTarea="";
+		$scope.estadoTarea="";
+		$scope.detalleTarea="";		
+		$scope.idTarea="";		
+
+		$scope.nuevo=true; // Muestra el botón "Nueva tarea"
+	}
+	
+});
+
+app.factory("taskFactory",function(){
+	var factoria={};
+	var indice = window.localStorage.getItem("indice");
+	var taskList = [];
+
+	if (!indice) {
+		window.localStorage.setItem("indice", 1);
+		indice=1;
+	}
+	
+	factoria.getIndex=function(){
+		return indice;
+	}
+
+	factoria.getTask=function(){
+		if (window.localStorage.length - 1) {
+			taskList = [];
+			var i, key;
+			for (var i=0; i < window.localStorage.length; i++) {
+				key = window.localStorage.key(i);
+				if (/Tarea:\d+/.test(key)) { // El registro comienza por "Tarea:"
+					taskList.push(JSON.parse(window.localStorage.getItem(key)));
+				}
+			}
+		}
+		return taskList;
+	}
+
+	return factoria;
+
+})
+
+</script>
+
+</body>
+</html>
