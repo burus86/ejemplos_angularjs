@@ -4,4 +4,4 @@ Para ejecutar el proyecto, es necesario copiarlo dentro del directorio '/var/www
 
 A continuación, arrancar un navegador web y acceder a la URL: http://localhost/ejemplos_angularjs/
 
-Ejemplo más completo: http://localhost/ejemplos_angularjs_2/Ejercicios/GestorTareasFactorias.html
+Ejemplo más completo: http://localhost/ejemplos_angularjs/Ejercicios/GestorTareasFactorias.html
